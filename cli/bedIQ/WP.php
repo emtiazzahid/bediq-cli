@@ -184,4 +184,12 @@ EOF;
 
         return '/root/backups/' . $fileName;
     }
+
+    public function dbRestore($container, $path, $sqlZipFile)
+    {
+        $this->exec($container, 'rm -f bediq.sql');
+        $this->exec($container, 'wget -O bediq.sql.gz ' . $sqlZipFile);
+        $this->exec($container, 'gunzip bediq.sql.gz');
+        return $this->exec($container, 'wp db import --allow-root bediq.sql --path=' . $path);
+    }
 }

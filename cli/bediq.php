@@ -10,10 +10,13 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require __DIR__ . '/../../../autoload.php';
 }
 
-$dotenv = Dotenv\Dotenv::create(__DIR__.'/../');
-$dotenv->load();
+try{
+    $dotenv = \Dotenv\Dotenv::create(dirname(__DIR__.'/../../'));
+    $dotenv->load();
+}catch(Dotenv\Exception\InvalidPathException $e){
+    echo $e->getMessage();
+}
 
-use Bediq\Cli\Helpers\BedIQAPIHelper;
 use Silly\Application;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -372,6 +375,27 @@ $app->command('db:export domain', function ($domain) {
     output($fileName);
 
 })->descriptions('Export database.');
+
+$app->command('db:import domain database', function ($domain, $database) {
+
+    $endPoint = getenv('BEDIQ_API_ENDPOINT');
+
+    $file   = new Filesystem();
+    $cli    = new CommandLine();
+    $lxd    = new Lxc($cli, $file);
+    $wp     = new WP($cli, $file);
+
+    $path = '/var/www/html';
+
+    $container = $lxd->nameByDomain($domain);
+
+    // url for server temporary public file
+    $database = $endPoint.'/'.$database;
+
+    $result = $wp->dbRestore($container, $path, $database);
+    output($result);
+
+})->descriptions('Import database.');
 
 $app->command('site:ssl static_url wp_url email', function ($static_url, $wp_url, $email) {
     $cli   = new CommandLine();
